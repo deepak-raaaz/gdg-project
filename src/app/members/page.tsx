@@ -1,163 +1,63 @@
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
-import { gsap } from "gsap";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer/Footer";
-import ImageFrame from "@/components/ImageFrame";
 import MaxWidthWrapper from "@/hooks/MaxWidthWrapper";
-import ExpandedCard from "@/components/ExpandedCard";
-import { memberCategories, categoryColors, Member } from "@/data/members";
+import { MemberCategoryNavigation } from "@/app/members/MemberCategoryNavigation";
+import { OrganizerCard } from "@/app/members/OrganizerCard";
+import { NestedMemberCategory } from "@/app/members/NestedMemberCategory";
+import { memberCategories } from "@/data/members";
+import { animations } from "@/utils/member-animations";
 
-// Member Category Component
-const MemberCategory: React.FC<{ 
-  category: string; 
-  members: Member[]; 
-  borderColor: string 
-}> = ({ category, members, borderColor }) => {
-  const [expandedMember, setExpandedMember] = useState<Member | null>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const categoryRef = useRef<HTMLDivElement>(null);
+// Get the organizer from Core Team
+const organizer = memberCategories["Core Team"].find(member => member.isOrganizer);
 
-  useEffect(() => {
-    // Animate category container and cards
-    if (categoryRef.current) {
-      gsap.fromTo(
-        categoryRef.current,
-        { opacity: 0, y: 50 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          duration: 0.5,
-          ease: "power2.out"
-        }
-      );
+// Reorganize categories without the organizer
+const reorganizedCategories = {
+  "Tech Members": [
+    {
+      category: "Web Developers",
+      members: memberCategories["Tech Members"][0].members
+    },
+    {
+      category: "App Developers",
+      members: memberCategories["Tech Members"][1].members
+    },
+    {
+      category: "ML/Ops",
+      members: memberCategories["Tech Members"][2].members
     }
-
-    // Animate individual cards
-    if (members && members.length > 0) {
-      cardRefs.current = cardRefs.current.slice(0, members.length);
-      cardRefs.current.forEach((card, index) => {
-        if (card) {
-          gsap.fromTo(
-            card,
-            { opacity: 0, y: 50, scale: 0.9 },
-            {
-              opacity: 1, 
-              y: 0, 
-              scale: 1,
-              duration: 0.5,
-              delay: index * 0.1,
-              ease: "power2.out"
-            }
-          );
-        }
-      });
+  ],
+  "Media Team": [
+    {
+      category: "Graphics Designers",
+      members: memberCategories["Media Team"][0].members
+    },
+    {
+      category: "Video Editors",
+      members: memberCategories["Media Team"][1].members
+    },
+    {
+      category: "Content Writers",
+      members: memberCategories["Media Team"][2].members
+    },
+    {
+      category: "Photographers",
+      members: memberCategories["Media Team"][3].members
     }
-  }, [members, category]);
-
-  // If no members, show a message
-  if (!members || members.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        No members in this category.
-      </div>
-    );
-  }
-
-  return (
-    <div ref={categoryRef} className="py-8">
-      <h2 className="text-3xl font-bold text-center mb-8 dark:text-white text-gray-800">
-        {category}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-center px-4">
-        {members.map((member, index) => (
-          <div
-            key={index}
-            ref={(el) => {
-              // Ensure we don't exceed the current members length
-              if (index < members.length) {
-                cardRefs.current[index] = el;
-              }
-            }}
-            className="cursor-pointer group relative"
-            onMouseEnter={(e) => {
-              gsap.to(e.currentTarget, {
-                scale: 1.05,
-                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                duration: 0.3,
-                ease: "power1.out"
-              });
-            }}
-            onMouseLeave={(e) => {
-              gsap.to(e.currentTarget, {
-                scale: 1,
-                boxShadow: "none",
-                duration: 0.3,
-                ease: "power1.out"
-              });
-            }}
-            onClick={(e) => {
-              // Click animation and expand
-              gsap.to(e.currentTarget, {
-                scale: 0.95,
-                duration: 0.1,
-                onComplete: () => {
-                  gsap.to(e.currentTarget, { scale: 1, duration: 0.1 });
-                  setExpandedMember(member);
-                }
-              });
-            }}
-          >
-            <ImageFrame
-              role={member.role}
-              name={member.name}
-              borderColor={borderColor}
-              imageSrc={member.imageSrc}
-              className="justify-self-center"
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Expanded Card */}
-      {expandedMember && (
-        <ExpandedCard 
-          member={expandedMember} 
-          isOpen={!!expandedMember} 
-          onClose={() => setExpandedMember(null)} 
-        />
-      )}
-    </div>
-  );
+  ],
+  "PR Team": memberCategories["PR Team"],
+  "Core Team": memberCategories["Core Team"].filter(member => !member.isOrganizer)
 };
 
-// Members Page
 const MembersPage: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState(Object.keys(memberCategories)[0]);
-  const categoryRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [activeCategory, setActiveCategory] = useState(Object.keys(reorganizedCategories)[0]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Animate category buttons
-    const categories = Object.keys(memberCategories);
-    categoryRefs.current = categoryRefs.current.slice(0, categories.length);
-    
-    categories.forEach((category, index) => {
-      const button = categoryRefs.current[index];
-      if (button) {
-        gsap.fromTo(
-          button,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1, 
-            y: 0,
-            duration: 0.5,
-            delay: index * 0.1,
-            ease: "power2.out"
-          }
-        );
-      }
-    });
+    if (containerRef.current) {
+      animations.animateCategoryNavigation(containerRef);
+    }
   }, []);
 
   return (
@@ -165,50 +65,32 @@ const MembersPage: React.FC = () => {
       <Navbar />
       <MaxWidthWrapper>
         <div className="py-16">
-          <h1 className="py-4 text-4xl sm:text-5xl text-center mb-12 font-bold dark:text-white text-gray-800">
+          <h1 className="text-4xl sm:text-5xl text-center mb-8 font-bold dark:text-white text-gray-800">
             Our Amazing Team
           </h1>
 
-          {/* Responsive Category Navigation */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8 px-4">
-            {Object.keys(memberCategories).map((category, index) => (
-              <button
-                ref={(el) => {
-                  // Ensure we don't exceed the current categories length
-                  if (index < Object.keys(memberCategories).length) {
-                    categoryRefs.current[index] = el;
-                  }
-                }}
-                key={category}
-                onClick={(e) => {
-                  // Add click animation
-                  gsap.to(e.currentTarget, {
-                    scale: 0.95,
-                    duration: 0.1,
-                    onComplete: () => {
-                      gsap.to(e.currentTarget, { scale: 1, duration: 0.1 });
-                      setActiveCategory(category);
-                    }
-                  });
-                }}
-                className={`
-                  px-4 sm:px-6 py-2 sm:py-3 rounded-xl text-sm sm:text-md font-semibold 
-                  transition-all duration-300
-                  ${activeCategory === category 
-                    ? 'bg-black text-white dark:bg-white dark:text-black' 
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}
-                `}
-              >
-                {category}
-              </button>
-            ))}
+          <div className="text-center max-w-4xl mx-auto mb-12 px-4">
+            <p className="text-lg text-gray-700 dark:text-gray-300">
+              Every member of the society has always been passionate and hard-working towards their goal, 
+              creating a positive work environment. Their support and will to help each other out in every 
+              way possible is what makes GDG On Campus- Haldia Institute of Technology
+            </p>
           </div>
 
-          {/* Active Category Content */}
-          <MemberCategory 
-            category={activeCategory} 
-            members={memberCategories[activeCategory]} 
-            borderColor={categoryColors[activeCategory as keyof typeof categoryColors]} 
+          {/* Organizer Card */}
+          {organizer && <OrganizerCard member={organizer} />}
+
+          {/* Category Navigation */}
+          <MemberCategoryNavigation 
+            activeCategory={activeCategory} 
+            setActiveCategory={setActiveCategory}
+            containerRef={containerRef}
+          />
+
+          {/* Category Content */}
+          <NestedMemberCategory 
+            categoryName={activeCategory} 
+            categoryData={reorganizedCategories[activeCategory as keyof typeof reorganizedCategories]} 
           />
         </div>
       </MaxWidthWrapper>
