@@ -6,7 +6,9 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
+//Events Model
+//Title,discr,date,location,Image 
+//Event model related to user
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -39,6 +41,7 @@ model User {
   name          String?
   username      String?   @unique
   password      String?
+  role          String    @default("User")
   email         String?   @unique
   emailVerified DateTime?
   image         String?
@@ -55,13 +58,13 @@ model VerificationToken {
 }
 
 model Member {
-  id          String    @id @default(cuid())
-  name        String
-  email       String    @unique
-  role        String
-  department  String
-  status      String    @default("ACTIVE")
-  joinDate    DateTime
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  role       String
+  department String
+  status     String   @default("ACTIVE")
+  joinDate   DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

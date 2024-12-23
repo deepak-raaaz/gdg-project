@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+//This route is getting all members 
 export async function GET() {
   try {
     const members = await prisma.member.findMany({

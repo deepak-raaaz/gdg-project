@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+//GET req of  user by providing their id in the body or url
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -24,15 +26,17 @@ export async function GET(
     );
   }
 }
-export async function POST(req: NextRequest) {
+
+
+export async function PUT(req: NextRequest) {
   try {
     const data = await req.json();
 
-    console.log("Received Data:", data);
+    console.log("Updated Data:", data);
 
     // Respond with a success message
     return NextResponse.json(
-      { message: "Data received successfully", data },
+      { message: "Data updated successfully", data },
       { status: 200 }
     );
   } catch (error) {
